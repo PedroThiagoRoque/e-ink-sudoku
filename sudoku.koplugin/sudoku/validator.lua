@@ -5,8 +5,19 @@ local function add(conflicts, cells)
 end
 
 function Validator.inspect(puzzle, values)
-    local conflicts, filled = {}, true
-    for _, cell_id in ipairs(puzzle:cell_ids()) do if values[cell_id] == nil then filled = false end end
+    values = values or {}
+    local conflicts, invalid, filled = {}, {}, true
+    for _, cell_id in ipairs(puzzle:cell_ids()) do
+        local value = values[cell_id]
+        if value == nil then
+            filled = false
+        else
+            if not puzzle:has_symbol(value) then invalid[cell_id] = true end
+            local given = puzzle:given(cell_id)
+            if given ~= nil and value ~= given then invalid[cell_id] = true end
+        end
+    end
+    for cell_id in pairs(values) do if not puzzle.cells[cell_id] then invalid[cell_id] = true end end
     for _, unit in ipairs(puzzle.units) do
         local seen = {}
         for _, cell_id in ipairs(unit.cells) do
@@ -21,14 +32,19 @@ function Validator.inspect(puzzle, values)
         for _, cell_id in ipairs(group.cells) do
             local value = values[cell_id]
             if value then
-                total = total + value
+                if type(value) ~= "number" then
+                    invalid[cell_id] = true
+                    group_filled = false
+                else
+                    total = total + value
+                end
                 if group.distinct and seen[value] then add(conflicts, { cell_id, seen[value] }) end
                 seen[value] = cell_id
             else group_filled = false end
         end
         if total > group.target or (group_filled and total ~= group.target) then add(conflicts, group.cells) end
     end
-    return { conflicts = conflicts, complete = filled, solved = filled and next(conflicts) == nil }
+    return { conflicts = conflicts, invalid = invalid, complete = filled, solved = filled and next(conflicts) == nil and next(invalid) == nil }
 end
 
 return Validator

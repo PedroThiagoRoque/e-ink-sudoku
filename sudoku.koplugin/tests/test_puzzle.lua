@@ -58,4 +58,44 @@ Test.run({
         Test.falsy(puzzle)
         Test.truthy(err)
     end,
+    ["rejects duplicate symbols"] = function()
+        local puzzle, err = Puzzle.new({ id="bad-symbols", mode="classic", rows=2, columns=2,
+            symbols={1,1}, cells={{id="1:1",row=1,column=1}}, units={} })
+        Test.falsy(puzzle)
+        Test.truthy(err)
+    end,
+    ["rejects invalid regular grid geometry"] = function()
+        local puzzle, err = Puzzle.new({ id="bad-grid", mode="classic", rows=9, columns=9,
+            symbols={1,2,3,4,5,6,7,8,9}, cells={{id="1:1",row=1,column=1}},
+            block={rows=2,columns=3}, units={} })
+        Test.falsy(puzzle)
+        Test.truthy(err)
+    end,
+    ["rejects units that reference missing cells"] = function()
+        local puzzle, err = Puzzle.new({ id="bad-unit", symbols={1,2},
+            cells={{id="a"},{id="b"}}, units={{cells={"a","missing"}}} })
+        Test.falsy(puzzle)
+        Test.truthy(err)
+    end,
+    ["rejects malformed sums"] = function()
+        local definitions = {
+            {cells={"a","missing"}, target=3},
+            {cells={"a","a"}, target=3},
+            {cells={"a","b"}, target="3"},
+        }
+        for index, sum in ipairs(definitions) do
+            local puzzle, err = Puzzle.new({ id="bad-sum-"..index, symbols={1,2},
+                cells={{id="a"},{id="b"}}, units={}, sums={sum} })
+            Test.falsy(puzzle)
+            Test.truthy(err)
+        end
+    end,
+    ["rejects conflicting givens and unknown modes"] = function()
+        local conflict = Puzzle.new({ id="bad-givens", symbols={1,2}, cells={{id="a"},{id="b"}},
+            units={{cells={"a","b"}}}, givens={a=1,b=1} })
+        Test.falsy(conflict)
+        local unknown = Puzzle.new({ id="bad-mode", mode="mystery", rows=1, columns=1,
+            symbols={1}, cells={{id="1:1",row=1,column=1}}, units={} })
+        Test.falsy(unknown)
+    end,
 })

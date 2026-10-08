@@ -24,4 +24,14 @@ Test.run({
         Test.truthy(result.conflicts.a)
         Test.falsy(result.solved)
     end,
+    ["rejects values outside symbols and changed givens"] = function()
+        local p = puzzle({ id="strict", symbols={1,2}, cells={{id="a"},{id="b"}},
+            units={{cells={"a","b"}}}, givens={a=1} })
+        local unknown = Validator.inspect(p, {a=1,b=9})
+        Test.truthy(unknown.invalid.b)
+        Test.falsy(unknown.solved)
+        local changed = Validator.inspect(p, {a=2,b=1})
+        Test.truthy(changed.invalid.a)
+        Test.falsy(changed.solved)
+    end,
 })
