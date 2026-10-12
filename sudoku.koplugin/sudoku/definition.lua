@@ -11,7 +11,7 @@ local function copy(value, seen)
 end
 function Definition.encode(puzzle)
     local cells={}; for _,id in ipairs(puzzle:cell_ids()) do cells[#cells+1]=puzzle.cells[id] end
-    return copy({id=puzzle.id,mode=puzzle.mode,rows=puzzle.rows,columns=puzzle.columns,symbols=puzzle.symbols,cells=cells,givens=puzzle.givens,units=puzzle.units,sums=puzzle.sums,block=puzzle.block})
+    return copy({id=puzzle.id,mode=puzzle.mode,rows=puzzle.rows,columns=puzzle.columns,symbols=puzzle.symbols,cells=cells,givens=puzzle.givens,units=puzzle.units,sums=puzzle.sums,block=puzzle.block,difficulty=puzzle.difficulty,seed=puzzle.seed,attempt=puzzle.attempt,metrics=puzzle.metrics})
 end
 function Definition.decode(record) return Puzzle.new(copy(record)) end
 return Definition

@@ -11,8 +11,8 @@ local mode_names = {
     ["mini-6"] = "Mini 6×6", samurai = "Samurai",
 }
 
-function Board.new(session)
-    return setmetatable({ session = session }, Board)
+function Board.new(session, on_change, on_close)
+    return setmetatable({ session = session, on_change = on_change, on_close = on_close }, Board)
 end
 
 function Board:close()
@@ -21,6 +21,7 @@ end
 
 function Board:open_number_popup(cell_id)
     if not self.session:select(cell_id) then return end
+    if self.on_change then self.on_change(self.session) end
     local popup
     local buttons, row = {}, {}
     for _, choice in ipairs(View.popup_choices(self.session.puzzle.symbols)) do
@@ -30,6 +31,7 @@ function Board:open_number_popup(cell_id)
             callback = function()
                 UIManager:close(popup)
                 self.session:input(value)
+                if self.on_change then self.on_change(self.session) end
                 self:render()
             end,
         }
@@ -64,10 +66,13 @@ function Board:render()
     local inspection = self.session:inspect()
     buttons[#buttons + 1] = {
         { text = "Desfazer", callback = function() self.session.game:undo(); self:render() end },
-        { text = self.session.notes and "Notas: sim" or "Notas: não", callback = function() self.session.notes = not self.session.notes; self:render() end },
+        { text = self.session.notes and "Notas: sim" or "Notas: não", callback = function() self.session.notes = not self.session.notes; if self.on_change then self.on_change(self.session) end; self:render() end },
         { text = next(inspection.conflicts) and "Conflitos" or "Verificar", callback = function() self:render() end },
     }
-    buttons[#buttons + 1] = {{ text = "Fechar", callback = function() self:close() end }}
+    buttons[#buttons + 1] = {{ text = "Fechar", callback = function()
+        self:close()
+        if self.on_close then self.on_close() end
+    end }}
     self.dialog = ButtonDialog:new{
         title = "Sudoku · " .. (mode_names[self.session.puzzle.mode] or self.session.puzzle.mode),
         buttons = buttons,

@@ -97,7 +97,7 @@ function Storage.load(path, puzzle_id)
     local record, err = read_record(path); local recovery
     if not record then record, err = read_record(path .. ".bak"); recovery = "backup" end
     if not record then return nil, nil, err end
-    if record.version ~= 1 or record.puzzle_id ~= puzzle_id then return nil, nil, "save incompatível" end
+    if record.version ~= 1 or (puzzle_id and record.puzzle_id ~= puzzle_id) then return nil, nil, "save incompatível" end
     return record, recovery
 end
 

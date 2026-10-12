@@ -43,4 +43,11 @@ Test.run({
         local restored = assert(Game.restore(puzzle, game:serialize()))
         Test.equal(restored.values["1:2"], 2)
     end,
+    ["notifies the session after a change"] = function()
+        local changes = 0
+        local game = Game.new(puzzle)
+        game.on_change = function() changes = changes + 1 end
+        assert(game:set_value("1:2", 2))
+        Test.equal(changes, 1)
+    end,
 })

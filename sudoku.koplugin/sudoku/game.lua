@@ -30,6 +30,7 @@ function Game:_change(action)
     self.undo_stack[#self.undo_stack + 1] = snapshot(self)
     self.redo_stack = {}
     action()
+    if self.on_change then self.on_change(self) end
     return true
 end
 

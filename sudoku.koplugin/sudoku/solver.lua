@@ -14,6 +14,13 @@ local function has_entries(value)
 end
 
 function Solver.new(puzzle, values, random)
+    local sums_by_cell = {}
+    for _, cell_id in ipairs(puzzle:cell_ids()) do sums_by_cell[cell_id] = {} end
+    for _, group in ipairs(puzzle.sums) do
+        for _, cell_id in ipairs(group.cells) do
+            sums_by_cell[cell_id][#sums_by_cell[cell_id] + 1] = group
+        end
+    end
     return setmetatable({
         puzzle = puzzle,
         values = copy(values or puzzle.givens),
@@ -26,20 +33,40 @@ function Solver.new(puzzle, values, random)
         initialized = false,
         pending_expand = false,
         stack = {},
+        sums_by_cell = sums_by_cell,
     }, Solver)
+end
+
+function Solver:_accepts(cell_id, value)
+    for _, unit in ipairs(self.puzzle:units_for(cell_id)) do
+        for _, peer in ipairs(unit.cells) do
+            if peer ~= cell_id and self.values[peer] == value then return false end
+        end
+    end
+    for _, group in ipairs(self.sums_by_cell[cell_id]) do
+        local total, filled, seen = 0, true, {}
+        for _, member in ipairs(group.cells) do
+            local current = member == cell_id and value or self.values[member]
+            if current == nil then
+                filled = false
+            elseif type(current) ~= "number" then
+                return false
+            else
+                if group.distinct and seen[current] then return false end
+                seen[current] = true
+                total = total + current
+            end
+        end
+        if total > group.target or (filled and total ~= group.target) then return false end
+    end
+    return true
 end
 
 function Solver:candidates(cell_id)
     local out = {}
-    local previous = self.values[cell_id]
     for _, value in ipairs(self.puzzle.symbols) do
-        self.values[cell_id] = value
-        local inspection = Validator.inspect(self.puzzle, self.values)
-        if not has_entries(inspection.conflicts) and not has_entries(inspection.invalid) then
-            out[#out + 1] = value
-        end
+        if self:_accepts(cell_id, value) then out[#out + 1] = value end
     end
-    self.values[cell_id] = previous
     return self.random and self.random:shuffle(out) or out
 end
 

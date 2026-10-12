@@ -34,6 +34,11 @@ local function copy_array(source)
     return result
 end
 
+local function copy_plain(value)
+    if type(value) ~= "table" then return value end
+    local result = {}; for key, item in pairs(value) do result[key] = copy_plain(item) end; return result
+end
+
 local function valid_positive_integer(value)
     return type(value) == "number" and value >= 1 and value % 1 == 0
 end
@@ -172,6 +177,10 @@ function Puzzle.new(definition)
         units_by_cell = units_for,
         sums = sums,
         block = block,
+        difficulty = definition.difficulty,
+        seed = definition.seed,
+        attempt = definition.attempt,
+        metrics = copy_plain(definition.metrics),
     }, Puzzle)
 end
 

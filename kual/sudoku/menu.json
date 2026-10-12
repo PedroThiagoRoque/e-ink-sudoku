@@ -1,10 +1,15 @@
 {
   "items": [
     {
-      "name": "Abrir Sudoku no KOReader",
-      "priority": 10,
-      "exitmenu": true,
-      "action": "sh ./launch.sh"
+      "name": "Sudoku",
+      "items": [
+        {
+          "name": "Jogar",
+          "action": "sh ./launch.sh",
+          "params": "menu",
+          "status": false
+        }
+      ]
     }
   ]
 }
